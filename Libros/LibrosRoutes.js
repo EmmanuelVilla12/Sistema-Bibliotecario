@@ -6,7 +6,7 @@ const libros = [
   { id: 2, nombre: "Tiempo recios", fecha_Publicacion:2019, stock:4 },
   { id: 3, nombre: "La casa  de los espiritus", fecha_Publicacion:1982, stock:2 },
   { id: 4, nombre: "La divina comedia", fecha_Publicacion:1321, stock:9 },
-  { id: 5, nombre: "Memento Mori", fecha_Publicacion:2014, stock: "No hay" },
+  { id: 5, nombre: "Memento Mori", fecha_Publicacion:2014, stock: 0},
 ];
 
 //GET TODOS LOS LIBROS MAS FILTRO QUERY
@@ -16,8 +16,8 @@ const { nombre, fecha_Publicacion, stock } = req.query;
   const filtered = libros.filter(l => {
     return (
       (nombre == null || l.nombre?.toLowerCase().includes(nombre.toLowerCase())) &&
-      (fecha_Publicacion == null || l.fecha_Publicacion?.toLowerCase().includes(fecha_Publicacion.toLowerCase()))&&
-      (stock == null || l.stock?.toLowerCase().includes(stock.toLowerCase()))
+      (fecha_Publicacion == null || l.fecha_Publicacion===parseInt(fecha_Publicacion))&&
+      (stock == null || l.stock===parseInt(stock))
     );
   });
 
