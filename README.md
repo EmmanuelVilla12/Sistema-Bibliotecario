@@ -248,6 +248,11 @@ DELETE /prestamos/:id
 
 <br><br>
 
+## Diagrama ER
+
+![Vista del sistema](./imagenes/image.png)
+
+
 ## Integrantes
 
 - Nombre: Emmanuel Villa Valencia 
