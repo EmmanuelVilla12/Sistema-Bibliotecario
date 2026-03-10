@@ -1,5 +1,6 @@
 const express = require("express");
 const Routes = express.Router();
+const db = require('../db')
 
 const usuarios = [
   { id: 1, nombre: "pichula", tipo_usuario: "Estudiante" },
@@ -51,10 +52,27 @@ Routes.get("/usuarios/:id", (req, res) => {
 //POST- AGREGAR UN USUARIO
 Routes.post("/usuarios", (req, res) => {
   const { nombre, tipo_usuario } = req.body;
-  const nuevo = { id: usuarios.length + 1, nombre, tipo_usuario };
-  usuarios.push(nuevo);
-  res.status(201).json({ success: true, data: nuevo });
+
+  // Validación: campos obligatorios
+  if (!nombre || !tipo_usuario) {
+    return res.status(400).json({
+      success: false,
+      message: 'nombre y tipo de usuario son obligatorios'
+    });
+  }
+
+
+  db.run(
+    'INSERT INTO Usuarios (nombre, tipo_usuario) VALUES (?, ?)',
+    [nombre, tipo_usuario],
+    function(err) {
+      if (err) return res.status(500).json({ success: false, message: err.message });
+      res.status(201).json({ success: true, data: { id: this.lastID, nombre, tipo_usuario } });
+    }
+  );
 });
+
+
 
 // PUT - ACTUALIZAR USUARIO POR ID
 Routes.put("/usuarios/:id", (req, res) => {

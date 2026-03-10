@@ -1,5 +1,6 @@
 const express = require('express');
 const Routes = express.Router();
+const db = require('../db')
 
 const autores = [
   { id: 1, nombre: "Gabriel García Márquez", nacionalidad: "Colombiana" },
@@ -37,9 +38,24 @@ Routes.get('/autores', (req, res) => {
 //POST- CREAR AUTOR
 Routes.post('/autores', (req, res) => {
   const { nombre, nacionalidad } = req.body;
-  const nuevo = { id: autores.length + 1, nombre, nacionalidad };
-  autores.push(nuevo);
-  res.status(201).json({ success: true, data: nuevo });
+
+  // Validación: campos obligatorios
+  if (!nombre || !nacionalidad) {
+    return res.status(400).json({
+      success: false,
+      message: 'nombre y nacionalidad son obligatorios'
+    });
+  }
+
+
+  db.run(
+    'INSERT INTO Autores (nombre, nacionalidad) VALUES (?, ?)',
+    [nombre, nacionalidad],
+    function(err) {
+      if (err) return res.status(500).json({ success: false, message: err.message });
+      res.status(201).json({ success: true, data: { id: this.lastID, nombre, nacionalidad } });
+    }
+  );
 });
 
 

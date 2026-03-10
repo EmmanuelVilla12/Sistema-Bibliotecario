@@ -1,23 +1,25 @@
 const express = require('express');
 const Routes = express.Router();
+const db = require('../db')
 
 const libros = [
-  { id: 1, nombre: "Cien años de soledad", fecha_Publicacion:1967, stock:5 },
-  { id: 2, nombre: "Tiempo recios", fecha_Publicacion:2019, stock:4 },
-  { id: 3, nombre: "La casa  de los espiritus", fecha_Publicacion:1982, stock:2 },
-  { id: 4, nombre: "La divina comedia", fecha_Publicacion:1321, stock:9 },
-  { id: 5, nombre: "Memento Mori", fecha_Publicacion:2014, stock: 0},
+  { id: 1, id_autor: 1, nombre: "Cien años de soledad", fecha_publicacion:1967, stock:5 },
+  { id: 2, id_autor: 2, nombre: "Tiempo recios", fecha_publicacion:2019, stock:4 },
+  { id: 3, id_autor: 3, nombre: "La casa  de los espiritus", fecha_publicacion:1982, stock:2 },
+  { id: 4, id_autor: 4, nombre: "La divina comedia", fecha_publicacion:1321, stock:9 },
+  { id: 5, id_autor: 5, nombre: "Memento Mori", fecha_publicacion:2014, stock: 0},
 ];
 
 //GET TODOS LOS LIBROS MAS FILTRO QUERY
 Routes.get('/libros', (req, res) => {
-const { nombre, fecha_Publicacion, stock } = req.query;
+const { id_autor, nombre, fecha_publicacion, stock } = req.query;
 
   const filtered = libros.filter(l => {
     return (
       (nombre == null || l.nombre?.toLowerCase().includes(nombre.toLowerCase())) &&
-      (fecha_Publicacion == null || l.fecha_Publicacion===parseInt(fecha_Publicacion))&&
-      (stock == null || l.stock===parseInt(stock))
+      (fecha_publicacion == null || l.fecha_publicacion===parseInt(fecha_publicacion))&&
+      (stock == null || l.stock===parseInt(stock))&&
+      (id_autor == null || l.id_autor===parseInt(id_autor))
     );
   });
 
@@ -37,17 +39,35 @@ Routes.get('/libros/:id', (req, res) => {
 
 //POST- AGREGAR LIBRO
 Routes.post('/libros', (req, res) => {
-  const { nombre, fecha_Publicacion, stock } = req.body;
-  const nuevo = { id: libros.length + 1, nombre, fecha_Publicacion, stock };
-  libros.push(nuevo);
-  res.status(201).json({ success: true, data: nuevo });
-});
+  const { id_autor, nombre, fecha_publicacion, stock } = req.body;
 
+  if (!id_autor || !nombre || !fecha_publicacion || !stock) {
+    return res.status(400).json({
+      success: false,
+      message: 'id_autor, nombre, fecha_publicacion y stock son obligatorios'
+    });
+  }
+
+  db.run(
+    'INSERT INTO Libros (id_autor, nombre, fecha_publicacion, stock) VALUES (?, ?, ?, ?)',
+    [id_autor, nombre, fecha_publicacion, stock],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
+
+      res.status(201).json({
+        success: true,
+        data: { id: this.lastID, id_autor, nombre, fecha_publicacion, stock }
+      });
+    }
+  );
+});
 
 // PUT - Actualizar un usuario por ID
 Routes.put('/libros/:id', (req, res) => {
   const id = parseInt(req.params.id);
-  const { nombre, fecha_Publicacion, stock } = req.body;
+  const { id_autor, nombre, fecha_publicacion, stock } = req.body;
 
   const libro = libros.find(l => l.id === id);
 
@@ -57,8 +77,9 @@ Routes.put('/libros/:id', (req, res) => {
 
   // Actualizamos solo si vienen datos
     if (nombre) libro.nombre = nombre;
-    if (fecha_Publicacion) libro.fecha_Publicacion = fecha_Publicacion;
+    if (fecha_publicacion) libro.fecha_publicacion = fecha_publicacion;
     if (stock) libro.stock = stock;
+    if (id_autor) libro.id_autor = id_autor
 
 
   res.json({ success: true, data: libro });
