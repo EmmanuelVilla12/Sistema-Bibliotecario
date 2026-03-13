@@ -16,4 +16,4 @@ app.use('/api', PrestamosRoutes);
 app.use('/api', UsuariosRoutes);
 
 // Iniciar servidor
-app.listen(PORT, () => console.log('API arriba!'));
+app.listen(port, () => console.log('API arriba!'));
