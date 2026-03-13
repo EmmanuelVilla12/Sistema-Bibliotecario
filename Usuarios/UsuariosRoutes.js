@@ -19,7 +19,7 @@ Routes.get("/usuarios", (req, res) => {
     });
   }
 
-  if (apiKey !== "123456") {
+  if (apiKey !== process.env.API_PASSWORD) {
     return res.status(403).json({
       success: false,
       message: "Error: la password no es correcta",

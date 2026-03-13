@@ -1,6 +1,8 @@
 const express = require('express');
 const app = express();
-const PORT = 3000;
+require ('dotenv').config();
+const port = process.env.PORT;
+const PASS = process.env.API_PASSWORD;
 
 const AutoresRoutes = require('./Autores/AutoresRoutes');
 const LibrosRoutes = require('./Libros/LibrosRoutes');
