@@ -29,11 +29,24 @@ db.run(`CREATE TABLE IF NOT EXISTS Libros (
 
 db.run(`CREATE TABLE IF NOT EXISTS Prestamos (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id_empleado INTEGER,
   id_usuario INTEGER,
   id_libro INTEGER,
   fecha_prestamo TEXT,
   FOREIGN KEY (id_libro) REFERENCES Libros(id),
-  FOREIGN KEY (id_usuario) REFERENCES Usuarios(id)
+  FOREIGN KEY (id_usuario) REFERENCES Usuarios(id),
+  FOREIGN KEY (id_empleado) REFERENCES Empleados(id)
 )`);
+
+db.run(`CREATE TABLE IF NOT EXISTS Empleados (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nombre TEXT,
+  apellidos TEXT,
+  cargo TEXT,
+  telefono TEXT,
+  correo_electronico TEXT UNIQUE
+)`);
+
+
 
 module.exports = db;

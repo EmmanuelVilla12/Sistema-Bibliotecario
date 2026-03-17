@@ -3,14 +3,14 @@ const Routes = express.Router();
 const db = require('../db')
 
 const prestamos = [
-  { id: 1, id_usuario:1, id_libro: 1, fecha_prestamo:"21-09-2014" },
-  { id: 2, id_usuario:2, id_libro: 5, fecha_prestamo:"2-10-2014" },
-  { id: 3, id_usuario:3, id_libro: 1, fecha_prestamo:"30-11-2014" },
+  { id: 1, id_empleado: 2, id_usuario:1, id_libro: 1, fecha_prestamo:"21-09-2014" },
+  { id: 2, id_empleado: 2, id_usuario:2, id_libro: 5, fecha_prestamo:"2-10-2014" },
+  { id: 3, id_empleado: 2, id_usuario:3, id_libro: 1, fecha_prestamo:"30-11-2014" },
 ];
 
 //GET- MOTRAR TODOS LOS PRESTAMOS CON FILTRO 
 Routes.get('/prestamos', (req, res) => {
-const { id_usuario, id_libro, fecha_prestamo } = req.query;
+const { id_empleado, id_usuario, id_libro, fecha_prestamo } = req.query;
 
   const filtered = prestamos.filter(p => {
     return (
@@ -34,23 +34,23 @@ Routes.get('/prestamos/:id', (req, res) => {
 
 //POST- AGREGAR UN PRESTAMO
 Routes.post('/prestamos', (req, res) => {
-  const { id_usuario, id_libro, fecha_prestamo } = req.body;
+  const { id_empleado, id_usuario, id_libro, fecha_prestamo } = req.body;
 
   // Validación: campos obligatorios
-  if (!id_usuario || !id_libro || !fecha_prestamo) {
+  if (!id_empleado ||!id_usuario || !id_libro || !fecha_prestamo) {
     return res.status(400).json({
       success: false,
-      message: 'id_usuario, id_libro y fecha_prestamo son obligatorios'
+      message: 'id_empleado, id_usuario, id_libro y fecha_prestamo son obligatorios'
     });
   }
 
 
   db.run(
-    'INSERT INTO Prestamos (id_usuario, id_libro, fecha_prestamo) VALUES (?, ?, ?)',
-    [id_usuario, id_libro, fecha_prestamo],
+    'INSERT INTO Prestamos (id_empleado, id_usuario, id_libro, fecha_prestamo) VALUES (?, ?, ?, ?)',
+    [id_empleado, id_usuario, id_libro, fecha_prestamo],
     function(err) {
       if (err) return res.status(500).json({ success: false, message: err.message });
-      res.status(201).json({ success: true, data: { id: this.lastID, id_usuario, id_libro, fecha_prestamo } });
+      res.status(201).json({ success: true, data: { id: this.lastID, id_empleado, id_usuario, id_libro, fecha_prestamo } });
     }
   );
 });
@@ -59,7 +59,7 @@ Routes.post('/prestamos', (req, res) => {
 // PUT - ACTUALIZAR PRESTAMO POR ID 
 Routes.put('/prestamos/:id', (req, res) => {
   const id = parseInt(req.params.id);
-  const { id_usuario, id_libro, fecha_prestamo } = req.body;
+  const { id_empleado, id_usuario, id_libro, fecha_prestamo } = req.body;
 
   const prestamo = prestamos.find(p => p.id === id);
 
@@ -68,6 +68,7 @@ Routes.put('/prestamos/:id', (req, res) => {
   }
 
   // Actualizamos solo si vienen datos
+    if (id_empleado) prestamo.id_empleado = id_empleado;
     if (id_usuario) prestamo.id_usuario = id_usuario;
     if (id_libro) prestamo.id_libro = id_libro;
     if (fecha_prestamo) prestamo.fecha_prestamo = fecha_prestamo;
