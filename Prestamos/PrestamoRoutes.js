@@ -8,89 +8,112 @@ const prestamos = [
   { id: 3, id_empleado: 2, id_usuario:3, id_libro: 1, fecha_prestamo:"30-11-2014" },
 ];
 
-//GET- MOTRAR TODOS LOS PRESTAMOS CON FILTRO 
+//GET- MOSTRAR TODOS LOS PRESTAMOS CON FILTRO 
 Routes.get('/prestamos', (req, res) => {
-const { id_empleado, id_usuario, id_libro, fecha_prestamo } = req.query;
+  const { id_empleado, id_usuario, id_libro, fecha_prestamo } = req.query;
 
-  const filtered = prestamos.filter(p => {
-    return (
-      (id_usuario == null || p.id_usuario?.toLowerCase().includes(id_usuario.toLowerCase())) &&
-      (id_libro == null || p.id_libro?.toLowerCase().includes(id_libro.toLowerCase()))&&
-      (fecha_prestamo == null || p.fecha_prestamo?.toLowerCase().includes(fecha_prestamo.toLowerCase()))
-    );
+  // 🔥 USAR DB EN VEZ DEL ARRAY
+  db.all("SELECT * FROM Prestamos", [], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+
+    const filtered = rows.filter(p => {
+      return (
+        (id_empleado == null || String(p.id_empleado).includes(id_empleado)) &&
+        (id_usuario == null || String(p.id_usuario).includes(id_usuario)) &&
+        (id_libro == null || String(p.id_libro).includes(id_libro)) &&
+        (fecha_prestamo == null || p.fecha_prestamo?.toLowerCase().includes(fecha_prestamo.toLowerCase()))
+      );
+    });
+
+    res.json({ success: true, data: filtered });
   });
-
-  res.json({ success: true, data: filtered });
 });
 
 //GET- VER PRESTAMOS POR ID
 Routes.get('/prestamos/:id', (req, res) => {
-  const prestamo = prestamos.find(p => p.id === parseInt(req.params.id));
-  if (!prestamo) 
-    return res.status(404).json({ success: false, message: 'Prestamo no existente' });
-  
-  res.json({ success: true, data: prestamo });
+  const id = parseInt(req.params.id);
+
+  db.get("SELECT * FROM Prestamos WHERE id = ?", [id], (err, row) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+
+    if (!row) {
+      return res.status(404).json({ success: false, message: 'Prestamo no existente' });
+    }
+
+    res.json({ success: true, data: row });
+  });
 });
 
 //POST- AGREGAR UN PRESTAMO
 Routes.post('/prestamos', (req, res) => {
   const { id_empleado, id_usuario, id_libro, fecha_prestamo } = req.body;
 
-  // Validación: campos obligatorios
-  if (!id_empleado ||!id_usuario || !id_libro || !fecha_prestamo) {
+  if (!id_empleado || !id_usuario || !id_libro || !fecha_prestamo) {
     return res.status(400).json({
       success: false,
       message: 'id_empleado, id_usuario, id_libro y fecha_prestamo son obligatorios'
     });
   }
 
-
   db.run(
     'INSERT INTO Prestamos (id_empleado, id_usuario, id_libro, fecha_prestamo) VALUES (?, ?, ?, ?)',
     [id_empleado, id_usuario, id_libro, fecha_prestamo],
     function(err) {
       if (err) return res.status(500).json({ success: false, message: err.message });
-      res.status(201).json({ success: true, data: { id: this.lastID, id_empleado, id_usuario, id_libro, fecha_prestamo } });
+
+      res.status(201).json({
+        success: true,
+        data: { id: this.lastID, id_empleado, id_usuario, id_libro, fecha_prestamo }
+      });
     }
   );
 });
-
 
 // PUT - ACTUALIZAR PRESTAMO POR ID 
 Routes.put('/prestamos/:id', (req, res) => {
   const id = parseInt(req.params.id);
   const { id_empleado, id_usuario, id_libro, fecha_prestamo } = req.body;
 
-  const prestamo = prestamos.find(p => p.id === id);
+  // 🔥 ACTUALIZAR EN DB
+  db.run(
+    `UPDATE Prestamos 
+     SET id_empleado = ?, id_usuario = ?, id_libro = ?, fecha_prestamo = ?
+     WHERE id = ?`,
+    [id_empleado, id_usuario, id_libro, fecha_prestamo, id],
+    function (err) {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
 
-  if (!prestamo) {
-    return res.status(404).json({ success: false, message: 'Prestamo no encontrado' });
-  }
+      if (this.changes === 0) {
+        return res.status(404).json({ success: false, message: 'Prestamo no encontrado' });
+      }
 
-  // Actualizamos solo si vienen datos
-    if (id_empleado) prestamo.id_empleado = id_empleado;
-    if (id_usuario) prestamo.id_usuario = id_usuario;
-    if (id_libro) prestamo.id_libro = id_libro;
-    if (fecha_prestamo) prestamo.fecha_prestamo = fecha_prestamo;
-
-
-  res.json({ success: true, data: prestamo });
+      res.json({ success: true });
+    }
+  );
 });
 
-// DELETE - Eliminar libro por ID
+// DELETE - Eliminar prestamo por ID
 Routes.delete('/prestamos/:id', (req, res) => {
   const id = parseInt(req.params.id);
 
-  const index = prestamos.findIndex(u => u.id === id);
+  // 🔥 BORRAR EN DB
+  db.run("DELETE FROM Prestamos WHERE id = ?", [id], function (err) {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
 
-  if (index === -1) {
-    return res.status(404).json({ success: false, message: 'Registro no encontrado' });
-  }
+    if (this.changes === 0) {
+      return res.status(404).json({ success: false, message: 'Registro no encontrado' });
+    }
 
-  const eliminado = prestamos.splice(index, 1);
-
-  res.json({ success: true, data: eliminado[0] });
+    res.json({ success: true });
+  });
 });
-
 
 module.exports = Routes;

@@ -28,25 +28,40 @@ Routes.get("/usuarios", (req, res) => {
 
   const { nombre, tipo_usuario } = req.query;
 
-  let filtered = usuarios.filter(u => {
-    return (
-      (nombre == null ||u.nombre?.toLowerCase().includes(nombre.toLowerCase())) &&
-      (tipo_usuario == null ||u.tipo_usuario?.toLowerCase().includes(tipo_usuario.toLowerCase()))
-    );
-  });
+   // 🔥 AHORA USA DB PERO MANTIENE FILTRO
+  db.all("SELECT * FROM Usuarios", [], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
 
-  res.json({ success: true, data: filtered });
+    let filtered = rows.filter(u => {
+      return (
+        (nombre == null || u.nombre?.toLowerCase().includes(nombre.toLowerCase())) &&
+        (tipo_usuario == null || u.tipo_usuario?.toLowerCase().includes(tipo_usuario.toLowerCase()))
+      );
+    });
+
+    res.json({ success: true, data: filtered });
+  });
 });
+
 
 //USUARIOS POR ID
 Routes.get("/usuarios/:id", (req, res) => {
   const usuario = usuarios.find((u) => u.id === parseInt(req.params.id));
-  if (!usuario)
-    return res
-      .status(404)
-      .json({ success: false, message: "Usuario no existente" });
+  const id = parseInt(req.params.id);
 
-  res.json({ success: true, data: usuario });
+  db.get("SELECT * FROM Usuarios WHERE id = ?", [id], (err, row) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+
+    if (!row) {
+      return res.status(404).json({ success: false, message: "Usuario no existente" });
+    }
+
+    res.json({ success: true, data: row });
+  });
 });
 
 //POST- AGREGAR UN USUARIO
@@ -79,36 +94,42 @@ Routes.put("/usuarios/:id", (req, res) => {
   const id = parseInt(req.params.id);
   const { nombre, tipo_usuario } = req.body;
 
-  const usuario = usuarios.find((p) => p.id === id);
+  // 🔥 YA NO USA ARRAY, USA DB
+  db.run(
+    `UPDATE Usuarios 
+     SET nombre = ?, tipo_usuario = ?
+     WHERE id = ?`,
+    [nombre, tipo_usuario],
+    function (err) {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
 
-  if (!usuario) {
-    return res
-      .status(404)
-      .json({ success: false, message: "Usuario no encontrado" });
-  }
+      if (this.changes === 0) {
+        return res.status(404).json({ success: false, message: "Usuario no encontrado" });
+      }
 
-  // Actualizamos solo si vienen datos
-  if (nombre) usuario.nombre = nombre;
-  if (tipo_usuario) usuario.tipo_usuario = tipo_usuario;
-
-  res.json({ success: true, data: usuario });
+      res.json({ success: true });
+    }
+  );
 });
 
 // DELETE - ELIMINAR POR ID
 Routes.delete("/usuarios/:id", (req, res) => {
   const id = parseInt(req.params.id);
 
-  const index = usuarios.findIndex((u) => u.id === id);
+   // 🔥 AHORA BORRA EN DB
+  db.run("DELETE FROM Usuarios WHERE id = ?", [id], function (err) {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
 
-  if (index === -1) {
-    return res
-      .status(404)
-      .json({ success: false, message: "Usuario no encontrado" });
-  }
+    if (this.changes === 0) {
+      return res.status(404).json({ success: false, message: "Usuario no encontrado" });
+    }
 
-  const eliminado = usuarios.splice(index, 1);
-
-  res.json({ success: true, data: eliminado[0] });
+    res.json({ success: true });
+  });
 });
 
 module.exports = Routes;

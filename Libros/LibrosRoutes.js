@@ -12,28 +12,43 @@ const libros = [
 
 //GET TODOS LOS LIBROS MAS FILTRO QUERY
 Routes.get('/libros', (req, res) => {
-const { id_autor, nombre, fecha_publicacion, stock } = req.query;
+  const { id_autor, nombre, fecha_publicacion, stock } = req.query;
 
-  const filtered = libros.filter(l => {
-    return (
-      (nombre == null || l.nombre?.toLowerCase().includes(nombre.toLowerCase())) &&
-      (fecha_publicacion == null || l.fecha_publicacion===parseInt(fecha_publicacion))&&
-      (stock == null || l.stock===parseInt(stock))&&
-      (id_autor == null || l.id_autor===parseInt(id_autor))
-    );
+  // 🔥 USAR DB
+  db.all("SELECT * FROM Libros", [], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+
+    const filtered = rows.filter(l => {
+      return (
+        (nombre == null || l.nombre?.toLowerCase().includes(nombre.toLowerCase())) &&
+        (fecha_publicacion == null || l.fecha_publicacion == parseInt(fecha_publicacion)) &&
+        (stock == null || l.stock == parseInt(stock)) &&
+        (id_autor == null || l.id_autor == parseInt(id_autor))
+      );
+    });
+
+    res.json({ success: true, data: filtered });
   });
-
-  res.json({ success: true, data: filtered });
 });
 
 
 // GET -BUSCAR LIBRO POR ID 
 Routes.get('/libros/:id', (req, res) => {
-  const libro = libros.find(l => l.id === parseInt(req.params.id));
-  if (!libros) 
-    return res.status(404).json({ success: false, message: 'Libro no encontrado' });
-  
-  res.json({ success: true, data: libro });
+  const id = parseInt(req.params.id);
+
+  db.get("SELECT * FROM Libros WHERE id = ?", [id], (err, row) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+
+    if (!row) { // 🔥 CORRECCIÓN (antes decía libros)
+      return res.status(404).json({ success: false, message: 'Libro no encontrado' });
+    }
+
+    res.json({ success: true, data: row });
+  });
 });
 
 
@@ -64,41 +79,47 @@ Routes.post('/libros', (req, res) => {
   );
 });
 
-// PUT - Actualizar un usuario por ID
+// PUT - Actualizar libro por ID
 Routes.put('/libros/:id', (req, res) => {
   const id = parseInt(req.params.id);
   const { id_autor, nombre, fecha_publicacion, stock } = req.body;
 
-  const libro = libros.find(l => l.id === id);
+  // 🔥 USAR DB
+  db.run(
+    `UPDATE Libros 
+     SET id_autor = ?, nombre = ?, fecha_publicacion = ?, stock = ?
+     WHERE id = ?`,
+    [id_autor, nombre, fecha_publicacion, stock, id],
+    function (err) {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
 
-  if (!libro) {
-    return res.status(404).json({ success: false, message: 'Libro no encontrado' });
-  }
+      if (this.changes === 0) {
+        return res.status(404).json({ success: false, message: 'Libro no encontrado' });
+      }
 
-  // Actualizamos solo si vienen datos
-    if (nombre) libro.nombre = nombre;
-    if (fecha_publicacion) libro.fecha_publicacion = fecha_publicacion;
-    if (stock) libro.stock = stock;
-    if (id_autor) libro.id_autor = id_autor
-
-
-  res.json({ success: true, data: libro });
+      res.json({ success: true });
+    }
+  );
 });
 
 // DELETE - Eliminar libro por ID
 Routes.delete('/libros/:id', (req, res) => {
   const id = parseInt(req.params.id);
 
-  const index = libros.findIndex(u => u.id === id);
+  // 🔥 BORRAR EN DB
+  db.run("DELETE FROM Libros WHERE id = ?", [id], function (err) {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
 
-  if (index === -1) {
-    return res.status(404).json({ success: false, message: 'libro no encontrado' });
-  }
+    if (this.changes === 0) {
+      return res.status(404).json({ success: false, message: 'libro no encontrado' });
+    }
 
-  const eliminado = libros.splice(index, 1);
-
-  res.json({ success: true, data: eliminado[0] });
+    res.json({ success: true });
+  });
 });
-
 
 module.exports = Routes;

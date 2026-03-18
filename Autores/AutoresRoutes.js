@@ -13,11 +13,20 @@ const autores = [
 
 // GET - BUSCAR AUTOR POR ID 
 Routes.get('/autores/:id', (req, res) => {
-  const autor = autores.find(a => a.id === parseInt(req.params.id));
-  if (!autor) 
-    return res.status(404).json({ success: false, message: 'Autor no encontrado' });
-  
-  res.json({ success: true, data: autor });
+  const id = parseInt(req.params.id);
+
+  // 🔥 USAR DB
+  db.get("SELECT * FROM Autores WHERE id = ?", [id], (err, row) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+
+    if (!row) {
+      return res.status(404).json({ success: false, message: 'Autor no encontrado' });
+    }
+
+    res.json({ success: true, data: row });
+  });
 });
 
 
@@ -25,21 +34,27 @@ Routes.get('/autores/:id', (req, res) => {
 Routes.get('/autores', (req, res) => {
   const { nombre, nacionalidad } = req.query;
 
-  const filtered = autores.filter(p => {
-    return (
-      (nombre == null || p.nombre?.toLowerCase().includes(nombre.toLowerCase())) &&
-      (nacionalidad == null || p.nacionalidad?.toLowerCase().includes(nacionalidad.toLowerCase()))
-    );
-  });
+  // 🔥 USAR DB
+  db.all("SELECT * FROM Autores", [], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
 
-  res.json({ success: true, data: filtered });
+    const filtered = rows.filter(p => {
+      return (
+        (nombre == null || p.nombre?.toLowerCase().includes(nombre.toLowerCase())) &&
+        (nacionalidad == null || p.nacionalidad?.toLowerCase().includes(nacionalidad.toLowerCase()))
+      );
+    });
+
+    res.json({ success: true, data: filtered });
+  });
 });
 
 //POST- CREAR AUTOR
 Routes.post('/autores', (req, res) => {
   const { nombre, nacionalidad } = req.body;
 
-  // Validación: campos obligatorios
   if (!nombre || !nacionalidad) {
     return res.status(400).json({
       success: false,
@@ -47,13 +62,16 @@ Routes.post('/autores', (req, res) => {
     });
   }
 
-
   db.run(
     'INSERT INTO Autores (nombre, nacionalidad) VALUES (?, ?)',
     [nombre, nacionalidad],
     function(err) {
       if (err) return res.status(500).json({ success: false, message: err.message });
-      res.status(201).json({ success: true, data: { id: this.lastID, nombre, nacionalidad } });
+
+      res.status(201).json({
+        success: true,
+        data: { id: this.lastID, nombre, nacionalidad }
+      });
     }
   );
 });
@@ -64,19 +82,24 @@ Routes.put('/autores/:id', (req, res) => {
   const id = parseInt(req.params.id);
   const { nombre, nacionalidad } = req.body;
 
-  const autor = autores.find(l => l.id === id);
+  // 🔥 USAR DB
+  db.run(
+    `UPDATE Autores 
+     SET nombre = ?, nacionalidad = ?
+     WHERE id = ?`,
+    [nombre, nacionalidad, id],
+    function (err) {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
 
-  if (!autor) {
-    return res.status(404).json({ success: false, message: 'Autor no encontrado' });
-  }
+      if (this.changes === 0) {
+        return res.status(404).json({ success: false, message: 'Autor no encontrado' });
+      }
 
-  // Actualizamos solo si vienen datos
-    if (nombre) autor.nombre = nombre;
-    if (nacionalidad) autor.nacionalidad = nacionalidad;
-
-
-
-  res.json({ success: true, data: autor });
+      res.json({ success: true });
+    }
+  );
 });
 
 
@@ -84,15 +107,18 @@ Routes.put('/autores/:id', (req, res) => {
 Routes.delete('/autores/:id', (req, res) => {
   const id = parseInt(req.params.id);
 
-  const index = autores.findIndex(u => u.id === id);
+  // 🔥 BORRAR EN DB
+  db.run("DELETE FROM Autores WHERE id = ?", [id], function (err) {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
 
-  if (index === -1) {
-    return res.status(404).json({ success: false, message: 'autor no encontrado' });
-  }
+    if (this.changes === 0) {
+      return res.status(404).json({ success: false, message: 'autor no encontrado' });
+    }
 
-  const eliminado = autores.splice(index, 1);
-
-  res.json({ success: true, data: eliminado[0] });
+    res.json({ success: true });
+  });
 });
 
 module.exports = Routes;

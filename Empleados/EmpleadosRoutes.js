@@ -1,7 +1,6 @@
 const express = require("express");
 const Routes = express.Router();
 const db = require('../db');
-const e = require("express"); // (no se usa, pero lo dejo porque pediste no borrar nada)
 
 //Empleados Registrados
 const empleados = [
