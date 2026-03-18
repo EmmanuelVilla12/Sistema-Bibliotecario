@@ -83,7 +83,7 @@ Routes.put("/empleados/:id", (req, res) => {
   const id = parseInt(req.params.id);
   const { nombre, apellidos, cargo, telefono, correo_electronico } = req.body;
 
-  const empleado = empleado.find((p) => p.id === id);
+  const empleado = empleados.find((p) => p.id === id);
   
   if (!empleado) {
     return res
