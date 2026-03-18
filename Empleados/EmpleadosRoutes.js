@@ -1,7 +1,7 @@
 const express = require("express");
 const Routes = express.Router();
 const db = require('../db');
-const e = require("express");
+const e = require("express"); // (no se usa, pero lo dejo porque pediste no borrar nada)
 
 //Empleados Registrados
 const empleados = [
@@ -30,28 +30,41 @@ Routes.get("/empleados", (req, res) => {
 
   const { nombre, apellidos, cargo, telefono, correo_electronico } = req.query;
 
-  let filtered = empleados.filter(e => {
-    return (
-      (nombre == null ||e.nombre?.toLowerCase().includes(nombre.toLowerCase())) &&
-      (apellidos == null ||e.apellidos?.toLowerCase().includes(apellidos.toLowerCase()))&&
-      (cargo == null ||e.cargo?.toLowerCase().includes(cargo.toLowerCase()))&&
-      (telefono == null ||e.telefono?.toLowerCase().includes(telefono.toLowerCase()))&&
-      (correo_electronico == null ||e.correo_electronico?.toLowerCase().includes(correo_electronico.toLowerCase()))
-    );
-  });
+  // 🔥 AHORA USA DB PERO MANTIENE FILTRO
+  db.all("SELECT * FROM Empleados", [], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
 
-  res.json({ success: true, data: filtered });
+    let filtered = rows.filter(e => {
+      return (
+        (nombre == null || e.nombre?.toLowerCase().includes(nombre.toLowerCase())) &&
+        (apellidos == null || e.apellidos?.toLowerCase().includes(apellidos.toLowerCase())) &&
+        (cargo == null || e.cargo?.toLowerCase().includes(cargo.toLowerCase())) &&
+        (telefono == null || e.telefono?.toLowerCase().includes(telefono.toLowerCase())) &&
+        (correo_electronico == null || e.correo_electronico?.toLowerCase().includes(correo_electronico.toLowerCase()))
+      );
+    });
+
+    res.json({ success: true, data: filtered });
+  });
 });
 
 //Empleados por ID
 Routes.get("/empleados/:id", (req, res) => {
-  const empleado = empleados.find((e) => e.id === parseInt(req.params.id));
-  if (!empleado)
-    return res
-      .status(404)
-      .json({ success: false, message: "Empleado no existente" });
+  const id = parseInt(req.params.id);
 
-  res.json({ success: true, data: empleado });
+  db.get("SELECT * FROM Empleados WHERE id = ?", [id], (err, row) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+
+    if (!row) {
+      return res.status(404).json({ success: false, message: "Empleado no existente" });
+    }
+
+    res.json({ success: true, data: row });
+  });
 });
 
 
@@ -59,21 +72,23 @@ Routes.get("/empleados/:id", (req, res) => {
 Routes.post("/empleados", (req, res) => {
   const { nombre, apellidos, cargo, telefono, correo_electronico } = req.body;
 
-  // Validación: campos obligatorios
-  if (!nombre || !apellidos || !cargo || !correo_electronico|| !telefono) {
+  if (!nombre || !apellidos || !cargo || !correo_electronico || !telefono) {
     return res.status(400).json({
       success: false,
       message: 'nombre, apellidos, cargo, telefono y correo_electronico son obligatorios'
     });
   }
 
-
   db.run(
     'INSERT INTO Empleados (nombre, apellidos, cargo, telefono, correo_electronico) VALUES (?, ?, ?, ?, ?)',
     [nombre, apellidos, cargo, telefono, correo_electronico],
     function(err) {
       if (err) return res.status(500).json({ success: false, message: err.message });
-      res.status(201).json({ success: true, data: { id: this.lastID, nombre, apellidos, cargo, telefono, correo_electronico } });
+
+      res.status(201).json({
+        success: true,
+        data: { id: this.lastID, nombre, apellidos, cargo, telefono, correo_electronico }
+      });
     }
   );
 });
@@ -83,39 +98,42 @@ Routes.put("/empleados/:id", (req, res) => {
   const id = parseInt(req.params.id);
   const { nombre, apellidos, cargo, telefono, correo_electronico } = req.body;
 
-  const empleado = empleados.find((p) => p.id === id);
-  
-  if (!empleado) {
-    return res
-      .status(404)
-      .json({ success: false, message: "Empleado no encontrado" });
-  }
+  // 🔥 YA NO USA ARRAY, USA DB
+  db.run(
+    `UPDATE Empleados 
+     SET nombre = ?, apellidos = ?, cargo = ?, telefono = ?, correo_electronico = ?
+     WHERE id = ?`,
+    [nombre, apellidos, cargo, telefono, correo_electronico, id],
+    function (err) {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
+      }
 
-  // Actualizamos solo si vienen datos
-  if (nombre) empleado.nombre = nombre;
-  if (apellidos) empleado.apellidos = apellidos;
-  if (cargo) empleado.cargo = cargo;
-  if (telefono) empleado.telefono = telefono;
-  if (correo_electronico) empleado.correo_electronico = correo_electronico;
+      if (this.changes === 0) {
+        return res.status(404).json({ success: false, message: "Empleado no encontrado" });
+      }
 
-  res.json({ success: true, data: empleado });
+      res.json({ success: true });
+    }
+  );
 });
 
 // DELETE - ELIMINAR POR ID
 Routes.delete("/empleados/:id", (req, res) => {
   const id = parseInt(req.params.id);
 
-  const index = empleados.findIndex((u) => u.id === id);
+  // 🔥 AHORA BORRA EN DB
+  db.run("DELETE FROM Empleados WHERE id = ?", [id], function (err) {
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
 
-  if (index === -1) {
-    return res
-      .status(404)
-      .json({ success: false, message: "Empleado no encontrado" });
-  }
+    if (this.changes === 0) {
+      return res.status(404).json({ success: false, message: "Empleado no encontrado" });
+    }
 
-  const eliminado = empleados.splice(index, 1);
-
-  res.json({ success: true, data: eliminado[0] });
+    res.json({ success: true });
+  });
 });
 
 module.exports = Routes;
