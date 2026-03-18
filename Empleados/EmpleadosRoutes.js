@@ -78,4 +78,44 @@ Routes.post("/empleados", (req, res) => {
   );
 });
 
+// PUT - ACTUALIZAR USUARIO POR ID
+Routes.put("/empleados/:id", (req, res) => {
+  const id = parseInt(req.params.id);
+  const { nombre, apellidos, cargo, telefono, correo_electronico } = req.body;
+
+  const empleado = empleado.find((p) => p.id === id);
+  
+  if (!empleado) {
+    return res
+      .status(404)
+      .json({ success: false, message: "Empleado no encontrado" });
+  }
+
+  // Actualizamos solo si vienen datos
+  if (nombre) empleado.nombre = nombre;
+  if (apellidos) empleado.apellidos = apellidos;
+  if (cargo) empleado.cargo = cargo;
+  if (telefono) empleado.telefono = telefono;
+  if (correo_electronico) empleado.correo_electronico = correo_electronico;
+
+  res.json({ success: true, data: empleado });
+});
+
+// DELETE - ELIMINAR POR ID
+Routes.delete("/empleados/:id", (req, res) => {
+  const id = parseInt(req.params.id);
+
+  const index = empleados.findIndex((u) => u.id === id);
+
+  if (index === -1) {
+    return res
+      .status(404)
+      .json({ success: false, message: "Empleado no encontrado" });
+  }
+
+  const eliminado = empleados.splice(index, 1);
+
+  res.json({ success: true, data: eliminado[0] });
+});
+
 module.exports = Routes;
