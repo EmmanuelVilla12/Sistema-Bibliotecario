@@ -29,8 +29,6 @@ function App() {
           headers: { password: "HolaMundo123" },
         }).then((r) => r.json()),
         fetch(`${API}/libros`).then((r) => r.json()),
-
-        // 🔥 CORRECCIÓN: empleados necesita password
         fetch(`${API}/empleados`, {
           headers: { password: "HolaMundo123" },
         }).then((r) => r.json()),
@@ -42,17 +40,16 @@ function App() {
       setEmpleados(e.data || e);
     } catch (err) {
       console.error(err);
-      setError("Error cargando datos base"); // 🔥 agregado
+      setError("Error cargando datos base");
     }
   };
 
   const cargarDatos = async () => {
     try {
       setCargando(true);
-      setError(""); // 🔥 limpiar error previo
+      setError("");
 
       const res = await fetch(`${API}/${tabla}`, {
-        // 🔥 CORRECCIÓN: empleados también necesita password
         headers:
           tabla === "usuarios" || tabla === "empleados"
             ? { password: "HolaMundo123" }
@@ -60,7 +57,6 @@ function App() {
       });
 
       const text = await res.text();
-
       let data;
       try {
         data = JSON.parse(text);
@@ -69,7 +65,7 @@ function App() {
       }
 
       const lista = data.data || data;
-      setDatos(Array.isArray(lista) ? lista : []); // 🔥 evitar crash
+      setDatos(Array.isArray(lista) ? lista : []);
     } catch (err) {
       console.error(err);
       setError("Error cargando datos");
@@ -84,8 +80,6 @@ function App() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-
-          // 🔥 CORRECCIÓN: empleados también requiere password
           ...(tabla === "usuarios" || tabla === "empleados"
             ? { password: "HolaMundo123" }
             : {}),
@@ -94,10 +88,7 @@ function App() {
       });
 
       const data = await res.json();
-
-      if (data.success === false) {
-        throw new Error(data.message);
-      }
+      if (data.success === false) throw new Error(data.message);
 
       await cargarDatos();
       await cargarTodo();
@@ -111,8 +102,6 @@ function App() {
     try {
       await fetch(`${API}/${tabla}/${id}`, {
         method: "DELETE",
-
-        // 🔥 CORRECCIÓN: empleados también protegido
         headers:
           tabla === "usuarios" || tabla === "empleados"
             ? { password: "HolaMundo123" }
@@ -123,6 +112,37 @@ function App() {
     } catch (err) {
       console.error(err);
       setError("Error al eliminar");
+    }
+  };
+
+  const editar = async (item) => {
+    try {
+      // Construir objeto actualizado
+      const actualizado = {};
+      for (const key of Object.keys(item)) {
+        if (key === "id") continue;
+        const nuevoValor = prompt(`Editar ${key}:`, item[key]);
+        actualizado[key] = nuevoValor ?? item[key];
+      }
+
+      const res = await fetch(`${API}/${tabla}/${item.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(tabla === "usuarios" || tabla === "empleados"
+            ? { password: "HolaMundo123" }
+            : {}),
+        },
+        body: JSON.stringify(actualizado),
+      });
+
+      const data = await res.json();
+      if (data.success === false) throw new Error(data.message);
+
+      await cargarDatos();
+    } catch (err) {
+      console.error(err);
+      setError("Error al actualizar");
     }
   };
 
@@ -143,7 +163,6 @@ function App() {
         >
           <h3>📘 Libro</h3>
           <input name="nombre" placeholder="Nombre" required />
-
           <select name="autor" required>
             <option value="">Selecciona autor</option>
             {autores.map((a) => (
@@ -152,7 +171,6 @@ function App() {
               </option>
             ))}
           </select>
-
           <input name="fecha" placeholder="Año" required />
           <input name="stock" placeholder="Stock" required />
           <button>Guardar</button>
@@ -214,7 +232,6 @@ function App() {
           }}
         >
           <h3>📦 Préstamo</h3>
-
           <select name="usuario" required>
             <option value="">Usuario</option>
             {usuarios.map((u) => (
@@ -223,7 +240,6 @@ function App() {
               </option>
             ))}
           </select>
-
           <select name="libro" required>
             <option value="">Libro</option>
             {libros.map((l) => (
@@ -232,7 +248,6 @@ function App() {
               </option>
             ))}
           </select>
-
           <input name="fecha" placeholder="Fecha" required />
           <button>Guardar</button>
         </form>
@@ -255,13 +270,11 @@ function App() {
           }}
         >
           <h3>🧑‍💼 Empleado</h3>
-
           <input name="nombre" placeholder="Nombre" required />
           <input name="apellidos" placeholder="Apellidos" required />
           <input name="cargo" placeholder="Cargo" required />
           <input name="telefono" placeholder="Teléfono" required />
           <input name="correo_electronico" placeholder="Correo" required />
-
           <button>Guardar</button>
         </form>
       );
@@ -302,12 +315,15 @@ function App() {
                   </p>
                 ))}
 
-                <button
-                  className="btn-delete"
-                  onClick={() => eliminar(item.id)}
-                >
-                  🗑 Eliminar
-                </button>
+                <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+                  <button className="btn-edit" onClick={() => editar(item)}>
+                    ✏️ Editar
+                  </button>
+
+                  <button className="btn-delete" onClick={() => eliminar(item.id)}>
+                    🗑 Eliminar
+                  </button>
+                </div>
               </div>
             ))}
         </div>
