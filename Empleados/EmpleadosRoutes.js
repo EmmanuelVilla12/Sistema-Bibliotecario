@@ -27,26 +27,28 @@ Routes.get("/empleados", (req, res) => {
     });
   }
 
-  const { nombre, apellidos, cargo, telefono, correo_electronico } = req.query;
+  const filtros = req.query;
 
-  // 🔥 AHORA USA DB PERO MANTIENE FILTRO
-  db.all("SELECT * FROM Empleados", [], (err, rows) => {
-    if (err) {
-      return res.status(500).json({ success: false, message: err.message });
-    }
+db.all("SELECT * FROM Empleados", [], (err, rows) => {
+  if (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
 
-    let filtered = rows.filter(e => {
+  let filtered = rows.filter((row) => {
+    return Object.entries(filtros).every(([key, value]) => {
+      if (!value) return true;
+
+      const campo = row[key];
+
       return (
-        (nombre == null || e.nombre?.toLowerCase().includes(nombre.toLowerCase())) &&
-        (apellidos == null || e.apellidos?.toLowerCase().includes(apellidos.toLowerCase())) &&
-        (cargo == null || e.cargo?.toLowerCase().includes(cargo.toLowerCase())) &&
-        (telefono == null || e.telefono?.toLowerCase().includes(telefono.toLowerCase())) &&
-        (correo_electronico == null || e.correo_electronico?.toLowerCase().includes(correo_electronico.toLowerCase()))
+        campo &&
+        campo.toString().toLowerCase().includes(value.toLowerCase())
       );
     });
-
-    res.json({ success: true, data: filtered });
   });
+
+  res.json({ success: true, data: filtered });
+});
 });
 
 //Empleados por ID

@@ -12,25 +12,28 @@ const libros = [
 
 //GET TODOS LOS LIBROS MAS FILTRO QUERY
 Routes.get('/libros', (req, res) => {
-  const { id_autor, nombre, fecha_publicacion, stock } = req.query;
+  const filtros = req.query;
 
-  // 🔥 USAR DB
-  db.all("SELECT * FROM Libros", [], (err, rows) => {
-    if (err) {
-      return res.status(500).json({ success: false, message: err.message });
-    }
+db.all("SELECT * FROM Libros", [], (err, rows) => {
+  if (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
 
-    const filtered = rows.filter(l => {
+  let filtered = rows.filter((row) => {
+    return Object.entries(filtros).every(([key, value]) => {
+      if (!value) return true;
+
+      const campo = row[key];
+
       return (
-        (nombre == null || l.nombre?.toLowerCase().includes(nombre.toLowerCase())) &&
-        (fecha_publicacion == null || l.fecha_publicacion == parseInt(fecha_publicacion)) &&
-        (stock == null || l.stock == parseInt(stock)) &&
-        (id_autor == null || l.id_autor == parseInt(id_autor))
+        campo &&
+        campo.toString().toLowerCase().includes(value.toLowerCase())
       );
     });
-
-    res.json({ success: true, data: filtered });
   });
+
+  res.json({ success: true, data: filtered });
+});
 });
 
 

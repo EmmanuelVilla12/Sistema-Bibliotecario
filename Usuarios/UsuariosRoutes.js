@@ -26,23 +26,28 @@ Routes.get("/usuarios", (req, res) => {
     });
   }
 
-  const { nombre, tipo_usuario } = req.query;
+  const filtros = req.query;
 
-   // 🔥 AHORA USA DB PERO MANTIENE FILTRO
-  db.all("SELECT * FROM Usuarios", [], (err, rows) => {
-    if (err) {
-      return res.status(500).json({ success: false, message: err.message });
-    }
+db.all("SELECT * FROM Usuarios", [], (err, rows) => {
+  if (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
 
-    let filtered = rows.filter(u => {
+  let filtered = rows.filter((row) => {
+    return Object.entries(filtros).every(([key, value]) => {
+      if (!value) return true;
+
+      const campo = row[key];
+
       return (
-        (nombre == null || u.nombre?.toLowerCase().includes(nombre.toLowerCase())) &&
-        (tipo_usuario == null || u.tipo_usuario?.toLowerCase().includes(tipo_usuario.toLowerCase()))
+        campo &&
+        campo.toString().toLowerCase().includes(value.toLowerCase())
       );
     });
-
-    res.json({ success: true, data: filtered });
   });
+
+  res.json({ success: true, data: filtered });
+});
 });
 
 

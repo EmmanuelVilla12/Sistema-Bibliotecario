@@ -32,23 +32,28 @@ Routes.get('/autores/:id', (req, res) => {
 
 //GET MUESTRA TODOS LOS AUTORES CON FILTRO
 Routes.get('/autores', (req, res) => {
-  const { nombre, nacionalidad } = req.query;
+  const filtros = req.query;
 
-  // 🔥 USAR DB
-  db.all("SELECT * FROM Autores", [], (err, rows) => {
-    if (err) {
-      return res.status(500).json({ success: false, message: err.message });
-    }
+db.all("SELECT * FROM Autores", [], (err, rows) => {
+  if (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
 
-    const filtered = rows.filter(p => {
+  let filtered = rows.filter((row) => {
+    return Object.entries(filtros).every(([key, value]) => {
+      if (!value) return true;
+
+      const campo = row[key];
+
       return (
-        (nombre == null || p.nombre?.toLowerCase().includes(nombre.toLowerCase())) &&
-        (nacionalidad == null || p.nacionalidad?.toLowerCase().includes(nacionalidad.toLowerCase()))
+        campo &&
+        campo.toString().toLowerCase().includes(value.toLowerCase())
       );
     });
-
-    res.json({ success: true, data: filtered });
   });
+
+  res.json({ success: true, data: filtered });
+});
 });
 
 //POST- CREAR AUTOR

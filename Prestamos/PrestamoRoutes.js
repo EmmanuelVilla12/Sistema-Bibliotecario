@@ -10,25 +10,28 @@ const prestamos = [
 
 //GET- MOSTRAR TODOS LOS PRESTAMOS CON FILTRO 
 Routes.get('/prestamos', (req, res) => {
-  const { id_empleado, id_usuario, id_libro, fecha_prestamo } = req.query;
+  const filtros = req.query;
 
-  // 🔥 USAR DB EN VEZ DEL ARRAY
-  db.all("SELECT * FROM Prestamos", [], (err, rows) => {
-    if (err) {
-      return res.status(500).json({ success: false, message: err.message });
-    }
+db.all("SELECT * FROM Prestamos", [], (err, rows) => {
+  if (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
 
-    const filtered = rows.filter(p => {
+  let filtered = rows.filter((row) => {
+    return Object.entries(filtros).every(([key, value]) => {
+      if (!value) return true;
+
+      const campo = row[key];
+
       return (
-        (id_empleado == null || String(p.id_empleado).includes(id_empleado)) &&
-        (id_usuario == null || String(p.id_usuario).includes(id_usuario)) &&
-        (id_libro == null || String(p.id_libro).includes(id_libro)) &&
-        (fecha_prestamo == null || p.fecha_prestamo?.toLowerCase().includes(fecha_prestamo.toLowerCase()))
+        campo &&
+        campo.toString().toLowerCase().includes(value.toLowerCase())
       );
     });
-
-    res.json({ success: true, data: filtered });
   });
+
+  res.json({ success: true, data: filtered });
+});
 });
 
 //GET- VER PRESTAMOS POR ID

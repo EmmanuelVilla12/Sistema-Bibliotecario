@@ -1,251 +1,83 @@
-/* BODY GENERAL */
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #000000, #333333, #cccccc, #ffffff);
+  background: #eef2f7;
 }
 
-/* CONTENEDOR PRINCIPAL */
 .app-container {
-  text-align: center;
-  padding: 40px 20px;
-  width: 100%;
-  max-width: 1200px;
+  padding: 20px;
 }
 
-/* TITULO */
 .title {
-  font-weight: bold;
-  color: #ffffff;
-  margin-bottom: 30px;
-  font-size: 2rem;
+  text-align: center;
 }
 
-/* SELECT */
 .select {
   display: block;
-  width: 100%;
-  max-width: 350px;
-  margin: 0 auto 40px auto;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  font-size: 16px;
-  outline: none;
+  margin: 10px auto;
+  padding: 8px;
 }
 
-.select:focus {
-  border-color: #4f46e5;
-  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
-}
-
-/* GRID FORM + BLOQUE DE DATOS */
 .grid {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  gap: 60px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 20px;
 }
 
-/* CARD GENERAL (formulario) */
 .card {
-  width: 350px;
-  min-height: 500px;
-  padding: 25px;
-  border-radius: 15px;
-  background: #666666;
-  color: #ffffff;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  box-shadow: 0 8px 20px rgba(255, 249, 249, 0.08);
-  text-align: center;
-  transition: transform 0.2s ease;
+  background: white;
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.card:hover {
-  transform: translateY(-5px);
-}
-
-.card h3 {
-  margin-bottom: 15px;
-  font-weight: bold;
-}
-
-.card input,
-.card select {
+form input,
+form select {
+  display: block;
   width: 100%;
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  font-weight: 500;
-  color: #111827;
-  background-color: white;
-  box-sizing: border-box;
+  margin-bottom: 8px;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
 }
 
-.card input:focus,
-.card select:focus {
-  outline: none;
-  border: 1px solid #4f46e5;
-  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
-}
-
-/* BOTONES */
 button {
-  padding: 12px;
-  border-radius: 8px;
+  padding: 8px;
   border: none;
-  font-weight: bold;
-  cursor: pointer;
-  background-color: #12086e;
+  border-radius: 6px;
+  background: #007bff;
   color: white;
-  transition: 0.2s ease;
+  cursor: pointer;
 }
 
-button:hover {
-  background-color: #d8d8d8;
-  color: #111827;
-}
-
-/* =====================
-   BLOQUE DE DATOS — mejorado
-   ===================== */
-
-.item-card {
-  width: 310px;
-  background: #ffffff;
-  color: #111827;
-  border-radius: 16px;
-  padding: 20px;
-  border: 1px solid rgba(0, 0, 0, 0.07);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.item-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.1);
-}
-
-/* Cabecera: avatar + nombre */
-.item-card__header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.item-card__avatar {
-  width: 44px;
-  height: 44px;
+/* 🔥 FILTROS */
+.filtros-box {
+  margin-top: 20px;
+  padding: 10px;
+  background: #f4f6f9;
   border-radius: 10px;
-  background: #ede9fe;
-  color: #5b21b6;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 15px;
-  font-weight: 700;
-  flex-shrink: 0;
 }
 
-.item-card__title {
-  font-size: 15px;
-  font-weight: 700;
-  color: #111827;
-  line-height: 1.2;
-}
-
-.item-card__subtitle {
-  font-size: 12px;
-  color: #6b7280;
-  margin-top: 2px;
-}
-
-/* Separador interno */
-.item-card__divider {
-  height: 1px;
-  background: #f3f4f6;
-  margin: 0;
-}
-
-/* Grid de campos 2 columnas */
-.item-card__fields {
+.filtros-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px 16px;
-}
-
-.item-card__field label {
-  display: block;
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: #9ca3af;
-  margin-bottom: 2px;
-}
-
-.item-card__field span {
-  font-size: 13px;
-  font-weight: 500;
-  color: #111827;
-}
-
-/* Fila de acciones */
-.item-card__actions {
-  display: flex;
   gap: 8px;
-  margin-top: 2px;
 }
 
-/* BOTONES DE DATOS */
-.btn-delete,
-.btn-edit {
-  flex: 1;
-  padding: 9px 12px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  border: none;
-  transition: filter 0.15s ease;
+.filtros-grid input {
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
 }
 
-.btn-delete {
-  background-color: #fee2e2;
-  color: #b91c1c;
-}
-
-.btn-delete:hover {
-  filter: brightness(0.9);
-}
-
-.btn-edit {
-  background-color: #ede9fe;
-  color: #5b21b6;
-}
-
-.btn-edit:hover {
-  filter: brightness(0.9);
-}
-
-/* MENSAJES DE ERROR */
-.error {
-  color: #b91c1c;
-  background-color: #fee2e2;
+/* ITEMS */
+.item-card {
+  border: 1px solid #ddd;
   padding: 10px;
+  margin-top: 10px;
   border-radius: 8px;
-  border: 1px solid #fca5a5;
-  margin-bottom: 10px;
-  text-align: center;
+}
+
+.error {
+  color: red;
 }
